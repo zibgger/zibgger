@@ -1,0 +1,59 @@
+---
+import { SITE_NAME, NAV_LINKS } from '../lib/constants';
+const currentPath = Astro.url.pathname;
+---
+
+<header class="fixed top-0 left-0 right-0 z-50 bg-bg/80 backdrop-blur-lg border-b border-bg-muted/50">
+  <nav class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="/" class="text-xl font-bold text-primary hover:text-primary-light transition-colors tracking-tight">
+      {SITE_NAME}
+    </a>
+
+    <!-- Nav Links -->
+    <div class="flex items-center gap-1">
+      {NAV_LINKS.map((link) => (
+        <a
+          href={link.href}
+          class={`nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+            (currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href)))
+              ? 'text-primary active'
+              : 'text-text-secondary hover:text-primary hover:bg-bg-muted'
+          }`}
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+
+    <!-- Mobile menu button (hidden on desktop) -->
+    <button
+      id="mobile-menu-btn"
+      class="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-bg-muted transition-colors"
+      aria-label="Toggle menu"
+      onclick="document.getElementById('mobile-menu')?.classList.toggle('hidden')"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" class="text-text">
+        <path d="M3 5h14M3 10h14M3 15h14" />
+      </svg>
+    </button>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden lg:hidden bg-bg/95 backdrop-blur-lg border-b border-bg-muted/50 pb-4">
+    <div class="flex flex-col px-6 gap-1">
+      {NAV_LINKS.map((link) => (
+        <a
+          href={link.href}
+          class={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+            (currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href)))
+              ? 'text-primary bg-primary/5'
+              : 'text-text-secondary hover:text-primary hover:bg-bg-muted'
+          }`}
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+  </div>
+</header>

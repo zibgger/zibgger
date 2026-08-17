@@ -1,0 +1,165 @@
+---
+import { getImageUrl } from '../lib/api';
+import type { ImageData } from '../lib/api';
+
+interface Props {
+  images: ImageData[];
+  title: string;
+}
+
+const { images, title } = Astro.props;
+const safeImages = images || [];
+---
+
+<div class="gallery-container" id="gallery">
+  {safeImages.length > 0 ? (
+    <>
+      <!-- Main Image -->
+      <div class="relative rounded-2xl overflow-hidden bg-bg-muted mb-4">
+        <img
+          id="gallery-main"
+          src={getImageUrl(safeImages[0])}
+          alt={safeImages[0].alternativeText || title}
+          class="w-full h-[500px] object-cover transition-opacity duration-300"
+        />
+
+        <!-- Navigation Arrows -->
+        {safeImages.length > 1 && (
+          <>
+            <button
+              id="gallery-prev"
+              class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-bg/80 backdrop-blur-sm hover:bg-bg transition-colors shadow-lg"
+              aria-label="上一张"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <button
+              id="gallery-next"
+              class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-bg/80 backdrop-blur-sm hover:bg-bg transition-colors shadow-lg"
+              aria-label="下一张"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
+
+      <!-- Thumbnails -->
+      {safeImages.length > 1 && (
+        <div class="flex gap-2 overflow-x-auto pb-2">
+          {safeImages.map((img, idx) => (
+            <button
+              class={`gallery-thumb flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                idx === 0 ? 'border-primary' : 'border-transparent hover:border-primary/40 opacity-60 hover:opacity-100'
+              }`}
+              data-index={idx}
+              aria-label={`查看第 ${idx + 1} 张图片`}
+            >
+              <img
+                src={getImageUrl(img)}
+                alt={img.alternativeText || `${title} ${idx + 1}`}
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <!-- Dots indicator -->
+      {safeImages.length > 1 && (
+        <div class="flex justify-center gap-2 mt-3">
+          {safeImages.map((_, idx) => (
+            <button
+              class={`gallery-dot w-2 h-2 rounded-full transition-all duration-300 ${
+                idx === 0 ? 'active bg-primary w-6' : 'bg-bg-muted hover:bg-primary/40'
+              }`}
+              data-index={idx}
+              aria-label={`跳转到第 ${idx + 1} 张`}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  ) : (
+    <div class="rounded-2xl bg-bg-muted h-64 flex items-center justify-center text-text-muted">
+      <div class="text-center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-3 opacity-30">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <p class="text-sm">暂无图片</p>
+      </div>
+    </div>
+  )}
+</div>
+
+<script>
+  function initGallery() {
+    const images = JSON.parse(document.getElementById('gallery-data')?.textContent || '[]');
+    if (images.length <= 1) return;
+
+    let currentIndex = 0;
+    const mainImg = document.getElementById('gallery-main') as HTMLImageElement;
+    const thumbs = document.querySelectorAll('.gallery-thumb');
+    const dots = document.querySelectorAll('.gallery-dot');
+    const prevBtn = document.getElementById('gallery-prev');
+    const nextBtn = document.getElementById('gallery-next');
+
+    function updateGallery(index: number) {
+      currentIndex = index;
+      if (mainImg) mainImg.src = images[index].url;
+
+      thumbs.forEach((thumb, i) => {
+        thumb.classList.toggle('border-primary', i === index);
+        thumb.classList.toggle('border-transparent', i !== index);
+        thumb.classList.toggle('opacity-60', i !== index);
+        thumb.classList.toggle('opacity-100', i === index);
+      });
+
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+        dot.classList.toggle('bg-primary', i === index);
+        dot.classList.toggle('w-6', i === index);
+        dot.classList.toggle('w-2', i !== index);
+        dot.classList.toggle('bg-bg-muted', i !== index);
+      });
+    }
+
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener('click', () => {
+        const idx = parseInt(thumb.getAttribute('data-index') || '0');
+        updateGallery(idx);
+      });
+    });
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const idx = parseInt(dot.getAttribute('data-index') || '0');
+        updateGallery(idx);
+      });
+    });
+
+    prevBtn?.addEventListener('click', () => {
+      const newIndex = (currentIndex - 1 + images.length) % images.length;
+      updateGallery(newIndex);
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      const newIndex = (currentIndex + 1) % images.length;
+      updateGallery(newIndex);
+    });
+  }
+
+  initGallery();
+</script>
+
+<!-- Hidden data for the gallery script -->
+<script type="application/json" id="gallery-data">
+  {JSON.stringify(safeImages.map((img) => ({ url: getImageUrl(img) })))}
+</script>

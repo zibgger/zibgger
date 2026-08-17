@@ -1,0 +1,74 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PortfolioCard from '../../components/PortfolioCard.astro';
+import TagFilter from '../../components/TagFilter.astro';
+import { getPortfolios } from '../../lib/api';
+import { CATEGORY_LABELS } from '../../lib/constants';
+import type { PortfolioItem } from '../../lib/api';
+
+const portfolios: PortfolioItem[] = await getPortfolios();
+const category = Astro.url.searchParams.get('tag') || '';
+
+// 分类列表（使用 category 字段值）
+const categories = ['web', 'design', 'photo', 'other'];
+const categoryLabels = categories.map((c) => CATEGORY_LABELS[c] || c);
+
+// 分类筛选
+const filteredPortfolios = category
+  ? portfolios.filter((p) => p.category === category)
+  : portfolios;
+---
+
+<Layout title={category ? `作品集 - ${CATEGORY_LABELS[category] || category}` : '作品集'} description="欣赏我的作品">
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <!-- Page Header -->
+    <div class="mb-10">
+      <h1 class="text-4xl font-bold text-text mb-3">作品集</h1>
+      <p class="text-text-secondary">
+        {category ? `分类: ${CATEGORY_LABELS[category] || category} · 共 ${filteredPortfolios.length} 个作品` : `共 ${filteredPortfolios.length} 个作品`}
+      </p>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="mb-10">
+      <div class="flex flex-wrap gap-2">
+        <a
+          href="/portfolio"
+          class={`tag-btn px-4 py-2 text-sm font-medium rounded-full border transition-all duration-300 ${
+            !category
+              ? 'active bg-primary text-white border-primary shadow-lg shadow-primary/20'
+              : 'bg-bg-card text-text-secondary border-bg-muted hover:border-primary/30 hover:text-primary'
+          }`}
+        >
+          全部
+        </a>
+        {categories.map((c, idx) => (
+          <a
+            href={`/portfolio?tag=${c}`}
+            class={`tag-btn px-4 py-2 text-sm font-medium rounded-full border transition-all duration-300 ${
+              category === c
+                ? 'active bg-primary text-white border-primary shadow-lg shadow-primary/20'
+                : 'bg-bg-card text-text-secondary border-bg-muted hover:border-primary/30 hover:text-primary'
+            }`}
+          >
+            {categoryLabels[idx]}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Portfolio Grid -->
+    {filteredPortfolios.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredPortfolios.map((item) => (
+          <PortfolioCard item={item} />
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-20 text-text-muted">
+        <p class="text-lg mb-2">暂无相关作品</p>
+        {category && <a href="/portfolio" class="text-primary hover:underline text-sm">清除筛选</a>}
+      </div>
+    )}
+  </div>
+</Layout>
